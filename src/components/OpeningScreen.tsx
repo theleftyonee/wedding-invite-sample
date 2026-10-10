@@ -9,11 +9,13 @@ import MonogramBadge from "./MonogramBadge";
 import Navigation from "./Navigation";
 import RsvpSection from "./RsvpSection";
 import ScrollIndicator from "./ScrollIndicator";
+import StorySection from "./StorySection";
 import VenueSection from "./VenueSection";
 import WelcomeSection from "./WelcomeSection";
 
 export default function OpeningScreen() {
   const [isOpened, setIsOpened] = useState(false);
+  const [isOpening, setIsOpening] = useState(false);
   const [heroFailed, setHeroFailed] = useState(false);
   const welcomeRef = useRef<HTMLElement>(null);
   const prefersReducedMotion = useRef(false);
@@ -25,6 +27,7 @@ export default function OpeningScreen() {
   }, []);
 
   const handleOpen = useCallback(() => {
+    setIsOpening(true);
     setIsOpened(true);
 
     requestAnimationFrame(() => {
@@ -36,7 +39,7 @@ export default function OpeningScreen() {
           block: "start",
         });
         welcome.focus({ preventScroll: true });
-      }, prefersReducedMotion.current ? 0 : 150);
+      }, prefersReducedMotion.current ? 0 : 280);
     });
   }, []);
 
@@ -50,7 +53,7 @@ export default function OpeningScreen() {
   return (
     <>
       <section
-        className={`hero${heroFailed ? " hero--fallback" : ""}`}
+        className={`hero${heroFailed ? " hero--fallback" : ""}${isOpening ? " is-opening" : ""}`}
         style={heroStyle}
         aria-label="Wedding invitation cover"
       >
@@ -73,22 +76,22 @@ export default function OpeningScreen() {
         <div className="hero-scrim" aria-hidden="true" />
 
         <div className="hero-stage">
-          <div className="hero-names animate-fade-in-up">
+          <div className="hero-names stagger stagger-1">
             <MonogramBadge
               initial1={couple.partner1.initial}
               initial2={couple.partner2.initial}
             />
           </div>
           <div className="hero-title-slot">
-            <h1 className="hero-title animate-fade-in-up">
+            <h1 className="hero-title stagger stagger-2">
               <span>{couple.partner1.firstName}</span>
               <span className="hero-amp">&amp;</span>
               <span>{couple.partner2.firstName}</span>
             </h1>
           </div>
 
-          <div className="hero-bottom animate-fade-in-up" style={{ animationDelay: "240ms" }}>
-            <div className="hero-card">
+          <div className="hero-bottom stagger stagger-3">
+            <div className="hero-copy">
               <p className="kicker">{copy.openingLine}</p>
               <p className="hero-invite">{copy.invitationText}</p>
               {showDate || showVenue ? (
@@ -120,11 +123,13 @@ export default function OpeningScreen() {
           </div>
         </div>
       </section>
+      {isOpening ? <div className="open-veil" aria-hidden="true" /> : null}
 
       {isOpened ? (
         <>
           <Navigation />
           <WelcomeSection ref={welcomeRef} />
+          <StorySection />
           <CelebrationsSection />
           <VenueSection />
           <GallerySection />

@@ -1,10 +1,12 @@
 import { useState } from "react";
 import config, { type WeddingEvent } from "../data/weddingConfig";
-import { isPlaceholder } from "../lib/placeholder";
+import { directionsHref, isPlaceholder } from "../lib/placeholder";
 import { downloadCalendar, parseInstant, type CalendarEntry } from "../lib/schedule";
 import { useReveal } from "../lib/useReveal";
 import AtmosphericImage from "./AtmosphericImage";
 import SectionHeading from "./SectionHeading";
+
+const tones = ["mehendi", "sangeet", "ceremony", "reception"] as const;
 
 function calendarEntry(event: WeddingEvent, names: string): CalendarEntry | null {
   if (!parseInstant(event.startsAt)) return null;
@@ -18,112 +20,26 @@ function calendarEntry(event: WeddingEvent, names: string): CalendarEntry | null
   };
 }
 
-function EventChapter({
-  event,
-  index,
-  names,
-}: {
-  event: WeddingEvent;
-  index: number;
-  names: string;
-}) {
-  const [isExpanded, setIsExpanded] = useState(false);
+export default function CelebrationsSection() {
+  const { events, copy, couple } = config;
+  const revealRef = useReveal<HTMLDivElement>();
+  const [active, setActive] = useState(0);
   const [calendarNote, setCalendarNote] = useState("");
-  const revealRef = useReveal<HTMLElement>();
+  const names = `${couple.partner1.firstName} & ${couple.partner2.firstName}`;
+  const event = events[active];
+
+  if (!events || events.length === 0 || !event) return null;
+
+  const entry = calendarEntry(event, names);
+  const directions = directionsHref(event.venue, "");
   const hasDate = !isPlaceholder(event.date);
   const hasTime = !isPlaceholder(event.time);
   const hasVenue = !isPlaceholder(event.venue);
   const hasDress = !isPlaceholder(event.dressCode);
-  const entry = calendarEntry(event, names);
-  const night = index === 2;
 
   const saveEvent = () => {
     if (!entry) return;
     const saved = downloadCalendar(`${event.name.toLowerCase().replace(/\s+/g, "-")}.ics`, [entry]);
-    setCalendarNote(saved ? "A calendar file is downloading to this device." : "");
-  };
-
-  return (
-    <article
-      ref={revealRef}
-      className={`chapter reveal${night ? " chapter--night" : ""}${index % 2 === 1 ? " is-flipped" : ""}`}
-      aria-labelledby={`event-title-${index}`}
-    >
-      <figure className="chapter-media">
-        <AtmosphericImage src={event.image} alt={event.imageAlt} width={864} height={1080} />
-      </figure>
-
-      <div className="chapter-copy">
-        <p className="chapter-index">0{index + 1}</p>
-        <h3 id={`event-title-${index}`}>{event.name}</h3>
-        <p>{event.description}</p>
-
-        <button
-          type="button"
-          className="event-toggle"
-          onClick={() => setIsExpanded((open) => !open)}
-          aria-expanded={isExpanded}
-          aria-controls={`event-details-${index}`}
-        >
-          {isExpanded ? "Hide details" : "View details"}
-          <svg width="10" height="10" viewBox="0 0 12 12" fill="none" aria-hidden="true">
-            <path d="M2 4l4 4 4-4" stroke="currentColor" strokeWidth="1.4" />
-          </svg>
-        </button>
-
-        {isExpanded ? (
-          <div id={`event-details-${index}`} className="event-details animate-fade-in">
-            <dl>
-              {hasDate ? (
-                <div>
-                  <dt>Date</dt>
-                  <dd>{event.date}</dd>
-                </div>
-              ) : null}
-              {hasTime ? (
-                <div>
-                  <dt>Time</dt>
-                  <dd>{event.time}</dd>
-                </div>
-              ) : null}
-              <div>
-                <dt>Venue</dt>
-                <dd>{hasVenue ? event.venue : "Details to follow."}</dd>
-              </div>
-              {hasDress ? (
-                <div>
-                  <dt>Dress</dt>
-                  <dd>{event.dressCode}</dd>
-                </div>
-              ) : null}
-            </dl>
-            {entry ? (
-              <button type="button" className="text-link" onClick={saveEvent}>
-                Add to calendar
-              </button>
-            ) : null}
-            {calendarNote ? <p className="calendar-note">{calendarNote}</p> : null}
-          </div>
-        ) : null}
-      </div>
-    </article>
-  );
-}
-
-export default function CelebrationsSection() {
-  const { events, copy, couple } = config;
-  const revealRef = useReveal<HTMLDivElement>();
-  const [calendarNote, setCalendarNote] = useState("");
-  const names = `${couple.partner1.firstName} & ${couple.partner2.firstName}`;
-  const entries = events.flatMap((event) => {
-    const entry = calendarEntry(event, names);
-    return entry ? [entry] : [];
-  });
-
-  if (!events || events.length === 0) return null;
-
-  const saveAll = () => {
-    const saved = downloadCalendar("aanya-arjun-celebrations.ics", entries);
     setCalendarNote(saved ? "A calendar file is downloading to this device." : "");
   };
 
@@ -135,19 +51,82 @@ export default function CelebrationsSection() {
           title={copy.celebrationsHeading}
           lede={copy.celebrationsText}
         />
-        {entries.length > 0 ? (
-          <div className="chapter-save">
-            <button type="button" className="quiet-button" onClick={saveAll}>
-              Add the celebrations
-            </button>
+
+        <div className="event-index" role="tablist" aria-label="Celebrations">
+          {events.map((item, index) => {
+            const selected = index === active;
+            return (
+              <button
+                key={item.name}
+                type="button"
+                role="tab"
+                className={`event-row${selected ? " is-selected" : ""}`}
+                aria-selected={selected}
+                aria-controls="event-sheet"
+                id={`event-tab-${index}`}
+                onClick={() => {
+                  setActive(index);
+                  setCalendarNote("");
+                }}
+              >
+                <img src={item.image} alt="" width={72} height={72} loading="lazy" decoding="async" />
+                <span>
+                  <strong>{item.name}</strong>
+                  <em>{isPlaceholder(item.date) ? "Date to follow" : item.date}</em>
+                </span>
+              </button>
+            );
+          })}
+        </div>
+
+        <article
+          id="event-sheet"
+          role="tabpanel"
+          aria-labelledby={`event-tab-${active}`}
+          className={`event-sheet event-sheet--${tones[active] ?? "mehendi"}`}
+        >
+          <figure className="event-sheet-media">
+            <AtmosphericImage src={event.image} alt={event.imageAlt} width={864} height={1080} />
+          </figure>
+          <div className="event-sheet-copy">
+            <p className="chapter-index">0{active + 1}</p>
+            <h3>{event.name}</h3>
+            <p>{event.description}</p>
+            <dl>
+              <div>
+                <dt>Date</dt>
+                <dd>{hasDate ? event.date : "Details to follow."}</dd>
+              </div>
+              <div>
+                <dt>Time</dt>
+                <dd>{hasTime ? event.time : "Details to follow."}</dd>
+              </div>
+              <div>
+                <dt>Venue</dt>
+                <dd>{hasVenue ? event.venue : "Details to follow."}</dd>
+              </div>
+              {hasDress ? (
+                <div>
+                  <dt>Dress</dt>
+                  <dd>{event.dressCode}</dd>
+                </div>
+              ) : null}
+            </dl>
+            <div className="chapter-actions">
+              {entry ? (
+                <button type="button" className="text-link" onClick={saveEvent}>
+                  Add to calendar
+                </button>
+              ) : null}
+              {directions ? (
+                <a className="text-link" href={directions} target="_blank" rel="noopener noreferrer">
+                  Directions
+                </a>
+              ) : null}
+            </div>
             {calendarNote ? <p className="calendar-note">{calendarNote}</p> : null}
           </div>
-        ) : null}
-        <div className="chapter-list">
-          {events.map((event, index) => (
-            <EventChapter key={event.name} event={event} index={index} names={names} />
-          ))}
-        </div>
+        </article>
       </div>
     </section>
   );

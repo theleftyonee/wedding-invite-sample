@@ -28,6 +28,14 @@ export interface GalleryStill {
   readonly alt: string;
 }
 
+export interface StoryMark {
+  readonly label: string;
+  readonly title: string;
+  readonly text: string;
+  readonly image: string;
+  readonly imageAlt: string;
+}
+
 export interface WeddingConfig {
   readonly couple: {
     readonly partner1: {
@@ -78,6 +86,8 @@ export interface WeddingConfig {
   };
 
   readonly events: readonly WeddingEvent[];
+
+  readonly story: readonly StoryMark[];
 
   readonly guestInfo: {
     readonly accommodation: string;
@@ -226,6 +236,30 @@ const weddingConfig: WeddingConfig = {
       image: "/images/events/reception.jpg",
       imageAlt: "A candlelit table set for a feast inside a vaulted hall",
       themeColor: "ink",
+    },
+  ],
+
+  story: [
+    {
+      label: "Sample",
+      title: "A first chapter",
+      text: "Sample placeholder. Replace this with a moment you want guests to know.",
+      image: "/images/gallery/2.jpg",
+      imageAlt: "Brass lanterns lined along a stone terrace at sunset",
+    },
+    {
+      label: "Sample",
+      title: "The promise",
+      text: "Sample placeholder. A date and a sentence belong here when you are ready.",
+      image: "/images/gallery/1.jpg",
+      imageAlt: "Marigold and rose garlands against carved sandstone",
+    },
+    {
+      label: "Sample",
+      title: "These days",
+      text: "Sample placeholder. The celebrations below are the only dates configured so far.",
+      image: "/images/gallery/3.jpg",
+      imageAlt: "A scalloped arch of bougainvillea opening onto a courtyard fountain",
     },
   ],
 

@@ -162,15 +162,14 @@ export default function RsvpSection() {
                 {attendance === "accepts" ? (
                   <div className="field">
                     <label className="field-label" htmlFor="dietary">
-                      Dietary needs <span className="optional">optional</span>
+                      Meal preference <span className="optional">optional</span>
                     </label>
-                    <textarea
-                      id="dietary"
-                      name="dietary"
-                      rows={2}
-                      maxLength={300}
-                      placeholder="Vegetarian, allergies, or anything we should know"
-                    />
+                    <select id="dietary" name="dietary" defaultValue="">
+                      <option value="">No preference yet</option>
+                      <option value="Vegetarian">Vegetarian</option>
+                      <option value="Jain">Jain</option>
+                      <option value="Non-vegetarian">Non-vegetarian</option>
+                    </select>
                   </div>
                 ) : null}
 

@@ -1,5 +1,5 @@
 import config from "../data/weddingConfig";
-import { isPlaceholder } from "../lib/placeholder";
+import { directionsHref, isPlaceholder } from "../lib/placeholder";
 import { useReveal } from "../lib/useReveal";
 import AtmosphericImage from "./AtmosphericImage";
 
@@ -10,7 +10,10 @@ export default function VenueSection() {
   const hasVenue = !isPlaceholder(ceremony.venue);
   const hasCity = !isPlaceholder(ceremony.city);
   const hasAddress = !isPlaceholder(ceremony.fullAddress);
-  const hasMapUrl = !isPlaceholder(ceremony.mapUrl);
+  const mapHref = directionsHref(
+    [ceremony.venue, ceremony.fullAddress, ceremony.city].filter((part) => !isPlaceholder(part)).join(", "),
+    ceremony.mapUrl,
+  );
   const hasAccommodation = !isPlaceholder(guestInfo.accommodation);
   const hasTravel = !isPlaceholder(guestInfo.travel);
   const hasDressCode = !isPlaceholder(guestInfo.dressCode);
@@ -45,8 +48,8 @@ export default function VenueSection() {
               {hasCity ? <span className="block">{ceremony.city}</span> : null}
             </p>
           ) : null}
-          {hasMapUrl ? (
-            <a className="text-link" href={ceremony.mapUrl} target="_blank" rel="noopener noreferrer">
+          {mapHref ? (
+            <a className="text-link" href={mapHref} target="_blank" rel="noopener noreferrer">
               Get directions
             </a>
           ) : null}

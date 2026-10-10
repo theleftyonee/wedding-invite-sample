@@ -29,7 +29,7 @@ export default function Countdown({ iso, variant = "full" }: { iso: string; vari
     return <p className="countdown-arrived">The day is here</p>;
   }
 
-  const spoken = `${remaining.days} days, ${remaining.hours} hours, ${remaining.minutes} minutes until the wedding`;
+  const spoken = `${remaining.days} ${remaining.days === 1 ? "day" : "days"}, ${remaining.hours} ${remaining.hours === 1 ? "hour" : "hours"}, ${remaining.minutes} ${remaining.minutes === 1 ? "minute" : "minutes"} until the wedding`;
 
   if (variant === "compact") {
     return (
