@@ -23,7 +23,8 @@ export default function OpeningScreen() {
   const [reducedMotion, setReducedMotion] = useState(
     () => window.matchMedia("(prefers-reduced-motion: reduce)").matches,
   );
-  const [musicOn, setMusicOn] = useState(true);
+  const [musicPlaying, setMusicPlaying] = useState(false);
+  const [musicMuted, setMusicMuted] = useState(false);
   const welcomeRef = useRef<HTMLElement>(null);
   const prefersReducedMotion = useRef(false);
   const audioRef = useRef<HTMLAudioElement>(null);
@@ -54,7 +55,7 @@ export default function OpeningScreen() {
 
   useEffect(() => {
     // Browsers may refuse audible autoplay until the first user gesture.
-    const gestures = ["pointerdown", "keydown", "touchend"] as const;
+    const gestures = ["pointerdown", "pointerup", "touchend", "click", "keydown"] as const;
     const onGesture = (event: Event) => {
       const target = event.target as Element | null;
       if (target?.closest?.(".sound-toggle")) return;
@@ -77,15 +78,20 @@ export default function OpeningScreen() {
     const music = audioRef.current;
     const tabId = Math.random().toString(36).slice(2);
     const channel = "BroadcastChannel" in window ? new BroadcastChannel("wedding-music") : null;
-    const onPlay = () => channel?.postMessage(tabId);
+    const onPlay = () => {
+      setMusicPlaying(true);
+      channel?.postMessage(tabId);
+    };
+    const onPause = () => setMusicPlaying(false);
     const onOtherTab = (message: MessageEvent<string>) => {
       if (message.data === tabId) return;
       music?.pause();
       musicPaused.current = true;
-      setMusicOn(false);
+      setMusicMuted(true);
       detach();
     };
     music?.addEventListener("play", onPlay);
+    music?.addEventListener("pause", onPause);
     channel?.addEventListener("message", onOtherTab);
 
     gestures.forEach((name) => window.addEventListener(name, onGesture, true));
@@ -98,6 +104,7 @@ export default function OpeningScreen() {
       detach();
       document.removeEventListener("visibilitychange", onVisibility);
       music?.removeEventListener("play", onPlay);
+      music?.removeEventListener("pause", onPause);
       channel?.close();
     };
   }, [playMusic]);
@@ -105,16 +112,16 @@ export default function OpeningScreen() {
   const toggleMusic = useCallback(async () => {
     const audio = audioRef.current;
     if (!audio) return;
-    if (musicOn) {
+    if (!audio.paused) {
       audio.pause();
       musicPaused.current = true;
-      setMusicOn(false);
+      setMusicMuted(true);
       return;
     }
     musicPaused.current = false;
-    setMusicOn(true);
+    setMusicMuted(false);
     await playMusic();
-  }, [musicOn, playMusic]);
+  }, [playMusic]);
 
   const handleOpen = useCallback(() => {
     setIsOpening(true);
@@ -147,14 +154,15 @@ export default function OpeningScreen() {
       {reducedMotion ? null : <CurtainOpening />}
       <button
         type="button"
-        className={`sound-toggle${musicOn ? " is-on" : ""}`}
+        className={`sound-toggle${musicPlaying ? " is-on" : ""}${
+          !musicPlaying && !musicMuted ? " is-waiting" : ""
+        }`}
         onClick={() => void toggleMusic()}
-        aria-pressed={!musicOn}
-        aria-label="Mute the music"
+        aria-label={musicPlaying ? "Mute the music" : "Play the music"}
       >
         <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
           <path d="M2.5 6.2h2.2L8 3.4v9.2L4.7 9.8H2.5V6.2Z" fill="currentColor" />
-          {musicOn ? (
+          {musicPlaying ? (
             <path d="M10 5.4c.8.7 1.2 1.6 1.2 2.6S10.8 9.9 10 10.6" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
           ) : (
             <path d="M10.2 6.1 13.4 9.9M13.4 6.1 10.2 9.9" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />

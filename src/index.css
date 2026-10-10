@@ -2745,6 +2745,23 @@ button.text-link {
   color: var(--color-burgundy);
 }
 
+@media (prefers-reduced-motion: no-preference) {
+  .sound-toggle.is-waiting {
+    animation: sound-invite 2.4s var(--ease-soft) infinite;
+  }
+}
+
+@keyframes sound-invite {
+  0%,
+  100% {
+    box-shadow: 0 8px 24px rgba(28, 22, 16, 0.16), 0 0 0 0 rgba(179, 151, 101, 0.45);
+  }
+
+  60% {
+    box-shadow: 0 8px 24px rgba(28, 22, 16, 0.16), 0 0 0 10px rgba(179, 151, 101, 0);
+  }
+}
+
 .read-progress {
   position: fixed;
   z-index: 50;
