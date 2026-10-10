@@ -1,5 +1,7 @@
+import { AnimatePresence, motion } from "motion/react";
 import { useCallback, useEffect, useRef, useState, type MouseEvent, type TouchEvent } from "react";
 import config from "../data/weddingConfig";
+import { easeOut } from "../lib/motion";
 import { useReveal } from "../lib/useReveal";
 import ArchPlaceholder from "./ArchPlaceholder";
 import SectionHeading from "./SectionHeading";
@@ -120,15 +122,20 @@ export default function GallerySection() {
         <p className="atmosphere-note">{copy.atmosphereNote}</p>
       </div>
 
+      <AnimatePresence>
       {activeIndex !== null ? (
-        <div
-          className="lightbox animate-fade-in"
+        <motion.div
+          className="lightbox"
           role="dialog"
           aria-modal="true"
           aria-label="Expanded photograph"
           onClick={closeLightbox}
           onTouchStart={handleTouchStart}
           onTouchEnd={handleTouchEnd}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.28, ease: easeOut }}
         >
           <button
             type="button"
@@ -177,8 +184,9 @@ export default function GallerySection() {
               {activeIndex + 1} / {gallery.length}
             </figcaption>
           </figure>
-        </div>
+        </motion.div>
       ) : null}
+      </AnimatePresence>
     </section>
   );
 }

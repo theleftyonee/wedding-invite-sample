@@ -1,3 +1,4 @@
+import { motion } from "motion/react";
 import { useState, type FormEvent } from "react";
 import config from "../data/weddingConfig";
 import { isPlaceholder } from "../lib/placeholder";
@@ -123,7 +124,7 @@ export default function RsvpSection() {
                     Attendance
                   </legend>
                   <div className="choices" role="radiogroup" aria-labelledby="attendance-label">
-                    <label className={`choice${attendance === "accepts" ? " is-selected" : ""}`}>
+                    <motion.label whileTap={{ scale: 0.985 }} className={`choice${attendance === "accepts" ? " is-selected" : ""}`}>
                       <input
                         type="radio"
                         name="attendance"
@@ -131,8 +132,8 @@ export default function RsvpSection() {
                         onChange={() => setAttendance("accepts")}
                       />
                       Joyfully accepts
-                    </label>
-                    <label className={`choice${attendance === "declines" ? " is-selected" : ""}`}>
+                    </motion.label>
+                    <motion.label whileTap={{ scale: 0.985 }} className={`choice${attendance === "declines" ? " is-selected" : ""}`}>
                       <input
                         type="radio"
                         name="attendance"
@@ -140,7 +141,7 @@ export default function RsvpSection() {
                         onChange={() => setAttendance("declines")}
                       />
                       Regretfully declines
-                    </label>
+                    </motion.label>
                   </div>
                 </fieldset>
 

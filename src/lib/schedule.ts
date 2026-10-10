@@ -15,6 +15,22 @@ export interface RemainingTime {
   readonly arrived: boolean;
 }
 
+export function formatClock(date: Date): string {
+  return new Intl.DateTimeFormat("en-IN", {
+    hour: "numeric",
+    minute: "2-digit",
+    hourCycle: "h12",
+    timeZone: "Asia/Kolkata",
+  }).format(date);
+}
+
+export function eventTimeRange(startsAt: string, durationHours: number, writtenTime: string): string {
+  const start = parseInstant(startsAt);
+  if (!start || durationHours <= 0) return writtenTime;
+  const end = new Date(start.getTime() + durationHours * 60 * 60 * 1000);
+  return `${writtenTime} until ${formatClock(end)}`;
+}
+
 export function remainingUntil(target: Date, now = Date.now()): RemainingTime | null {
   const diff = target.getTime() - now;
   if (diff <= 0) {

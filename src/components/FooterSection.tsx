@@ -1,4 +1,6 @@
+import { motion } from "motion/react";
 import { useState } from "react";
+import { easeOut } from "../lib/motion";
 import config from "../data/weddingConfig";
 import MonogramBadge from "./MonogramBadge";
 
@@ -55,7 +57,13 @@ export default function FooterSection() {
       />
       <div className="closing-scrim" aria-hidden="true" />
 
-      <div className="closing-inner">
+      <motion.div
+        className="closing-inner"
+        initial={{ opacity: 0, y: 20 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, amount: 0.45 }}
+        transition={{ duration: 0.8, ease: easeOut }}
+      >
         <p className="kicker" style={{ color: "rgba(247,242,233,0.78)" }}>
           {copy.closingKicker}
         </p>
@@ -80,7 +88,7 @@ export default function FooterSection() {
         <p className="closing-names">
           {couple.partner1.firstName} &amp; {couple.partner2.firstName}
         </p>
-      </div>
+      </motion.div>
     </footer>
   );
 }

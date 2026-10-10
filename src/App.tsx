@@ -1,9 +1,12 @@
+import { MotionConfig } from "motion/react";
 import OpeningScreen from "./components/OpeningScreen";
 
 export default function App() {
   return (
-    <main className="invitation">
-      <OpeningScreen />
-    </main>
+    <MotionConfig reducedMotion="user">
+      <main className="invitation">
+        <OpeningScreen />
+      </main>
+    </MotionConfig>
   );
 }
