@@ -6,16 +6,49 @@ import { easeOut, slideTransition, slideVariants } from "../lib/motion";
 import { directionsHref, isPlaceholder } from "../lib/placeholder";
 import { downloadCalendar, eventTimeRange, parseInstant, type CalendarEntry } from "../lib/schedule";
 
-const slides = ["The celebration", "Dress", "Venue", "Atmosphere", "Actions"] as const;
+const slides = ["Details", "Dress", "Venue", "Moments", "Save"] as const;
 
-function AttireMark({ tone, label }: { tone: string; label: string }) {
+const icons = {
+  calendar: "M4.5 6.5h15v13h-15zM4.5 10.5h15M8.5 4v4M15.5 4v4",
+  clock: "M12 4.5a7.5 7.5 0 1 1 0 15 7.5 7.5 0 0 1 0-15ZM12 8v4.3l2.8 1.7",
+  pin: "M12 20.5s-6-5.4-6-10a6 6 0 0 1 12 0c0 4.6-6 10-6 10ZM12 12.3a1.9 1.9 0 1 0 0-3.8 1.9 1.9 0 0 0 0 3.8Z",
+  dress: "M9.5 3.5h5l-.8 4 3.8 12.5h-11L10.3 7.5zM10.3 7.5h3.4",
+  share: "M8.5 12.5 15.5 16M15.5 8 8.5 11.5M17.5 9.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5ZM6.5 14.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5ZM17.5 19.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z",
+} as const;
+
+function Icon({ name }: { name: keyof typeof icons }) {
   return (
-    <figure className="attire-mark">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d={icons[name]} />
+    </svg>
+  );
+}
+
+function InfoTile({ icon, label, value, muted = false }: { icon: keyof typeof icons; label: string; value: string; muted?: boolean }) {
+  return (
+    <div className={`info-tile${muted ? " is-muted" : ""}`}>
+      <span className="info-tile-icon">
+        <Icon name={icon} />
+      </span>
+      <div>
+        <dt>{label}</dt>
+        <dd>{value}</dd>
+      </div>
+    </div>
+  );
+}
+
+function AttireTile({ tone, label, text }: { tone: string; label: string; text: string }) {
+  return (
+    <figure className="attire-tile">
       <svg viewBox="0 0 80 120" aria-hidden="true">
         <path d="M28 18c6 8 18 8 24 0l8 10-8 8v62H28V36l-8-8z" fill={tone} />
         <path d="M34 16h12l2 8H32z" fill="#f7f2e9" opacity="0.85" />
       </svg>
-      <figcaption>{label}</figcaption>
+      <figcaption>
+        <strong>{label}</strong>
+        {text}
+      </figcaption>
     </figure>
   );
 }
@@ -144,6 +177,10 @@ export default function EventExperience({
     }
   };
 
+  const previousEvent = config.events[index - 1];
+  const nextEvent = config.events[index + 1];
+  const count = (value: number) => String(value).padStart(2, "0");
+
   return createPortal(
     <motion.div
       className="event-dialog"
@@ -155,7 +192,7 @@ export default function EventExperience({
     >
       <motion.div
         ref={panelRef}
-        className="event-dialog-panel"
+        className={`event-dialog-panel theme--${event.themeColor}`}
         role="dialog"
         aria-modal="true"
         aria-labelledby="event-dialog-title"
@@ -166,9 +203,8 @@ export default function EventExperience({
         transition={{ duration: 0.4, ease: easeOut }}
       >
         <header className="event-dialog-bar">
-          <p>
-            {index + 1} / {total}
-            <span>{event.name}</span>
+          <p className="event-dialog-count">
+            <span>{count(index + 1)}</span> / {count(total)}
           </p>
           <button type="button" className="event-dialog-close" onClick={onClose} aria-label="Close event">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
@@ -180,21 +216,37 @@ export default function EventExperience({
         <div className="event-dialog-layout">
           <figure className="event-dialog-hero">
             <img src={event.image} alt={event.imageAlt} width={864} height={1080} />
+            <figcaption>
+              <span className="event-dialog-date">{event.date}</span>
+              <h2 id="event-dialog-title">{event.name}</h2>
+              <p>{event.time}</p>
+            </figcaption>
           </figure>
 
           <div className="event-dialog-body">
-            <div className="event-switch">
-              <button type="button" onClick={() => onShift(-1)} disabled={index === 0} aria-label="Previous celebration">
-                Previous
-              </button>
-              <button type="button" onClick={() => onShift(1)} disabled={index === total - 1} aria-label="Next celebration">
-                Next
-              </button>
+            <div className="event-tabs" role="tablist" aria-label={`${event.name} information`}>
+              {slides.map((label, tab) => (
+                <button
+                  key={label}
+                  type="button"
+                  role="tab"
+                  id={`event-tab-${tab}`}
+                  aria-selected={tab === slide}
+                  aria-controls="event-tabpanel"
+                  className={tab === slide ? "is-current" : ""}
+                  onClick={() => goToSlide(tab)}
+                >
+                  {label}
+                </button>
+              ))}
             </div>
 
             <AnimatePresence mode="wait" custom={direction}>
             <motion.div
               className="event-slide"
+              id="event-tabpanel"
+              role="tabpanel"
+              aria-labelledby={`event-tab-${slide}`}
               key={`${event.id}-${slide}`}
               custom={direction}
               variants={slideVariants}
@@ -213,60 +265,71 @@ export default function EventExperience({
             >
               {slide === 0 ? (
                 <>
-                  <p className="kicker">{slides[0]}</p>
-                  <h2 id="event-dialog-title">{event.name}</h2>
                   <p className="event-slide-lede">{event.description}</p>
-                  <dl className="event-facts">
-                    <div><dt>Date</dt><dd>{event.date}</dd></div>
-                    <div><dt>Time</dt><dd>{when}</dd></div>
-                    <div><dt>Venue</dt><dd>{hasVenue ? event.venue : "Details to follow."}</dd></div>
+                  <dl className="info-grid">
+                    <InfoTile icon="calendar" label="Date" value={event.date} />
+                    <InfoTile icon="clock" label="Time" value={when} />
+                    <InfoTile icon="pin" label="Venue" value={hasVenue ? event.venue : "To be confirmed"} muted={!hasVenue} />
+                    <InfoTile icon="dress" label="Dress code" value={event.dressCode} />
                   </dl>
                 </>
               ) : null}
 
               {slide === 1 ? (
                 <>
-                  <p className="kicker">{slides[1]}</p>
-                  <h2 id="event-dialog-title">{event.dressCode}</h2>
-                  <p className="event-slide-lede">{event.dressNote}</p>
-                  <div className="palette" aria-label="Sample colour palette">
-                    {event.palette.map((color) => (
-                      <span key={color} style={{ background: color }} title={color} />
-                    ))}
+                  <figure className="attire-lineup">
+                    <img
+                      src={`/images/attire/${event.id}.jpg`}
+                      alt={`Illustrated outfit ideas for the ${event.name}. ${event.attireWomen} ${event.attireMen}`}
+                      width={1024}
+                      height={768}
+                      decoding="async"
+                    />
+                    <figcaption>Illustration, for inspiration only</figcaption>
+                  </figure>
+                  <p className="event-card-label attire-lineup-label">Dress code</p>
+                  <h3 className="event-slide-title">{event.dressCode}</h3>
+                  <p className="event-slide-note">{event.dressNote}</p>
+                  <div className="event-card">
+                    <p className="event-card-label">Colour palette</p>
+                    <div className="palette" aria-label="Suggested colour palette">
+                      {event.palette.map((color) => (
+                        <span key={color} style={{ background: color }} title={color} />
+                      ))}
+                    </div>
                   </div>
-                  <div className="attire-row">
-                    <AttireMark tone={event.palette[0] ?? "#737A60"} label={event.attireWomen} />
-                    <AttireMark tone={event.palette[1] ?? "#29251F"} label={event.attireMen} />
+                  <div className="attire-grid">
+                    <AttireTile tone={event.palette[0] ?? "#737A60"} label="Women" text={event.attireWomen} />
+                    <AttireTile tone={event.palette[1] ?? "#29251F"} label="Men" text={event.attireMen} />
                   </div>
                 </>
               ) : null}
 
               {slide === 2 ? (
                 <>
-                  <p className="kicker">{slides[2]}</p>
-                  <h2 id="event-dialog-title">{hasVenue ? event.venue : "Venue to follow"}</h2>
                   <figure className="event-venue-still">
                     <img src={images.venue} alt={images.venueAlt} width={1280} height={720} />
                   </figure>
-                  <p className="event-slide-lede">{copy.atmosphereNote}</p>
-                  <p className="event-slide-lede">Arrive for {when}.</p>
+                  <dl className="info-grid">
+                    <InfoTile icon="pin" label="Venue" value={hasVenue ? event.venue : "To be confirmed"} muted={!hasVenue} />
+                    <InfoTile icon="clock" label="Arrive for" value={when} />
+                  </dl>
                   {directions ? (
                     <a className="invitation-button" href={directions} target="_blank" rel="noopener noreferrer">
                       Get directions
                     </a>
                   ) : (
                     <button type="button" className="invitation-button" disabled>
-                      Directions when the venue is confirmed
+                      Directions once the venue is confirmed
                     </button>
                   )}
+                  <p className="event-footnote">{copy.atmosphereNote}</p>
                 </>
               ) : null}
 
               {slide === 3 ? (
                 <>
-                  <p className="kicker">{slides[3]}</p>
-                  <h2 id="event-dialog-title">A sense of the room</h2>
-                  <p className="event-slide-lede">{copy.atmosphereNote}</p>
+                  <h3 className="event-slide-title">A sense of the room</h3>
                   <div className="experience-row">
                     {event.experience.map((still) => (
                       <figure key={still.src}>
@@ -274,27 +337,31 @@ export default function EventExperience({
                       </figure>
                     ))}
                   </div>
+                  <p className="event-footnote">{copy.atmosphereNote}</p>
                 </>
               ) : null}
 
               {slide === 4 ? (
                 <>
-                  <p className="kicker">{slides[4]}</p>
-                  <h2 id="event-dialog-title">Keep this gathering</h2>
+                  <h3 className="event-slide-title">Keep this gathering</h3>
                   <div className="event-action-list">
-                    <button type="button" className="invitation-button" onClick={save} disabled={!canSave}>
+                    <button type="button" className="event-action is-primary" onClick={save} disabled={!canSave}>
+                      <Icon name="calendar" />
                       Add to calendar
                     </button>
                     {directions ? (
-                      <a className="quiet-button" href={directions} target="_blank" rel="noopener noreferrer">
+                      <a className="event-action" href={directions} target="_blank" rel="noopener noreferrer">
+                        <Icon name="pin" />
                         Get directions
                       </a>
                     ) : (
-                      <button type="button" className="quiet-button" disabled>
+                      <button type="button" className="event-action" disabled>
+                        <Icon name="pin" />
                         Directions to follow
                       </button>
                     )}
-                    <button type="button" className="quiet-button" onClick={share}>
+                    <button type="button" className="event-action" onClick={share}>
+                      <Icon name="share" />
                       Share invitation
                     </button>
                   </div>
@@ -304,26 +371,24 @@ export default function EventExperience({
             </motion.div>
             </AnimatePresence>
 
-            <div className="slide-nav">
-              <button type="button" onClick={() => goToSlide(Math.max(0, slide - 1))} disabled={slide === 0} aria-label="Previous information">
-                Back
-              </button>
-              <div className="slide-dots" aria-label={`Slide ${slide + 1} of ${slides.length}: ${slides[slide]}`}>
-                {slides.map((label, dot) => (
-                  <button
-                    key={label}
-                    type="button"
-                    className={dot === slide ? "is-current" : ""}
-                    aria-label={label}
-                    aria-current={dot === slide ? "true" : undefined}
-                    onClick={() => goToSlide(dot)}
-                  />
-                ))}
-              </div>
-              <button type="button" onClick={() => goToSlide(Math.min(slides.length - 1, slide + 1))} disabled={slide === slides.length - 1} aria-label="Next information">
-                Next
-              </button>
-            </div>
+            <nav className="event-switch" aria-label="Other celebrations">
+              {previousEvent ? (
+                <button type="button" onClick={() => onShift(-1)} aria-label={`Previous celebration: ${previousEvent.name}`}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
+                    <path d="M14.5 6 8.5 12l6 6" />
+                  </svg>
+                  <span>{previousEvent.name}</span>
+                </button>
+              ) : <span />}
+              {nextEvent ? (
+                <button type="button" onClick={() => onShift(1)} aria-label={`Next celebration: ${nextEvent.name}`}>
+                  <span>{nextEvent.name}</span>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
+                    <path d="m9.5 6 6 6-6 6" />
+                  </svg>
+                </button>
+              ) : <span />}
+            </nav>
           </div>
         </div>
       </motion.div>
